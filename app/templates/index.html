@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+  <title>SAR图像飞机目标识别模型测试</title>
+  <style>
+    body {
+      transition: background-color 0.5s ease;
+    }
+
+    #loadingOverlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.8);
+      display: flex; /* 添加这一行 */
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      /* #内部元素上下、左右居中 */
+      
+    }
+
+    .spinner-border {
+      width: 3rem;
+      height: 3rem;
+      animation: spin 0.6s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .centered-button {
+      display: flex;
+      justify-content: center;
+    }
+
+    #uploadedImage,
+    #processedImage1,
+    #processedImage2 {
+      max-height: 400px;
+      width: auto;
+      transition: transform 0.3s ease;
+    }
+
+    #uploadedImage:hover,
+    #processedImage1:hover,
+    #processedImage2:hover {
+      transform: scale(1.05);
+    }
+
+    .card {
+      transition: transform 0.3s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+    }
+
+    .btn {
+      transition: background-color 0.3s ease, transform 0.3s ease;
+    }
+
+    .btn:hover {
+      background-color: #0056b3; /* 更深的蓝色 */
+      transform: scale(1.05);
+    }
+  </style>
+</head>
+
+<body class="d-flex flex-column align-items-center justify-content-center min-vh-100 bg-light">
+  <div id="loadingOverlay">
+    <div class="spinner-border" role="status">
+      <span class="visually-hidden">加载中...</span>
+    </div>
+  </div>
+  <div class="container">
+    <div class="card shadow-lg">
+      <div class="card-body">
+        <p class="text-center text-primary">基于YOLO算法的SAR图像飞机识别</p>
+        <h2 class="card-title text-center mb-4">SAR图像飞机目标识别模型测试</h2>
+        <div class="row">
+          <div class="col-md-4 col-sm-3"></div>
+          <div class="col-md-4 col-sm-6">
+            <input type="file" id="imageInput" accept="image/*" class="form-control mb-4">
+          </div>
+          <div class="col-md-4 col-sm-3"></div>
+        </div>
+        <div id="uploadedImageContainer" class="mb-4 text-center">
+          <h2 class="h5 mb-2">上传的图片:</h2>
+          <img id="uploadedImage" class="img-fluid rounded shadow-sm d-none" alt="Uploaded Image">
+        </div>
+        <div class="centered-button">
+          <button id="recognizeButton" class="btn btn-dark mb-4 d-none">识别</button>
+        </div>
+        <div id="processedImages" class="row g-4 d-none">
+          <div class="col-md-6 text-end">
+            <h2 class="h5 mb-2">↓模型预测结果</h2>
+            <img id="processedImage1" class="img-fluid rounded shadow-sm" alt="Processed Image 1">
+          </div>
+          <div class="col-md-6 text-start">
+            <h2 class="h5 mb-2">真实标注参考↓</h2>
+            <img id="processedImage2" class="img-fluid rounded shadow-sm" alt="Processed Image 2">
+          </div>
+        </div>
+      </div>
+      <br>
+      <br>
+      <br>
+      <br>
+      <br>
+      <br>
+      <br>
+      <br>
+    </div>
+    <br>
+    <br>
+    <br>
+    <br>
+  </div>
+
+  <script>
+    // 隐藏加载指示器
+    $('#loadingOverlay').hide();
+    $(document).ready(function () {
+      const maxHeight = 400; // 最大高度变量
+
+      $('#imageInput').change(function (event) {
+        const file = event.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            $('#uploadedImage').attr('src', e.target.result).removeClass('d-none');
+            $('#recognizeButton').removeClass('d-none');
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+
+      $('#recognizeButton').click(function () {
+        const file = $('#imageInput')[0].files[0];
+        if (file) {
+          const formData = new FormData();
+          formData.append('image', file);
+
+          // 显示加载指示器并禁用页面
+          $('#loadingOverlay').show();
+          $('body').css('pointer-events', 'none');
+
+          $.ajax({
+            url: '/recieve_picture', // 替换为你的后端路由
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function (data) {
+              // 将返回的Base64数据插入到img元素中
+              $('#processedImage1').attr('src', 'data:image/png;base64,' + data.image1).removeClass('d-none');
+              $('#processedImage2').attr('src', 'data:image/png;base64,' + data.image2).removeClass('d-none');
+              $('#processedImages').removeClass('d-none');
+
+              // 显示成功提示
+              alert('识别成功！');
+            },
+            error: function () {
+              alert('上传失败，请重试。');
+            },
+            complete: function () {
+              // 隐藏加载指示器并启用页面
+              $('#loadingOverlay').hide();
+              $('body').css('pointer-events', 'auto');
+            }
+          });
+        }
+      });
+    });
+  </script>
+
+</body>
+
+</html>

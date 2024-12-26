@@ -1,0 +1,16 @@
+# 文件名: data.yaml
+# 描述：配置YOLOv8的数据集信息
+
+# 数据集名称
+name: SAR-Aircraft
+
+# 类别数量
+nc: 7
+
+# 类别名称列表
+names: ['A220', 'A320/321', 'A330', 'ARJ21', 'Boeing737', 'Boeing787', 'other']
+
+# 训练集、验证集和测试集的子路径
+train: datasets/images/train
+val: datasets/images/val
+test: datasets/images/test
